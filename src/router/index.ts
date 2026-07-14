@@ -15,6 +15,18 @@ const router = createRouter({
       meta: { guest: true },
     },
     {
+      path: '/forgot-password',
+      name: 'forgot-password',
+      component: () => import('@/views/auth/ForgotPasswordView.vue'),
+      meta: { guest: true },
+    },
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: () => import('@/views/auth/ResetPasswordView.vue'),
+      meta: { guest: true },
+    },
+    {
       path: '/admin',
       component: () => import('@/components/layout/AppLayout.vue'),
       meta: { requiresAuth: true },

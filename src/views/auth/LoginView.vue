@@ -61,9 +61,9 @@
 
         <!-- Forgot password -->
         <div class="flex justify-end -mt-1">
-          <button type="button" class="text-sm text-tegbale-blue font-roboto hover:underline">
+          <RouterLink :to="{ name: 'forgot-password' }" class="text-sm text-tegbale-blue font-roboto hover:underline">
             Forgot Password?
-          </button>
+          </RouterLink>
         </div>
 
         <p v-if="error" class="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600 font-roboto">{{ error }}</p>
@@ -78,7 +78,7 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
 import { useVuelidate } from '@vuelidate/core'
 import { required, email, minLength } from '@vuelidate/validators'
 import { useAuthStore } from '@/stores/auth.store'

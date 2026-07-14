@@ -18,3 +18,12 @@ export const logout = (refreshToken: string) =>
 
 export const changePassword = (payload: { currentPassword: string; newPassword: string }) =>
   client.patch('/auth/change-password', payload)
+
+export const forgotPassword = (email: string) =>
+  client.post('/auth/forgot-password', { email })
+
+export const resetPassword = (token: string, newPassword: string) =>
+  client.post('/auth/reset-password', { token, newPassword })
+
+export const verifySmtp = () =>
+  client.get('/auth/verify-smtp')

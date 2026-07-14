@@ -34,6 +34,7 @@
             <th class="px-6 py-4 font-normal">Name</th>
             <th class="px-6 py-4 font-normal hidden md:table-cell">Email Address</th>
             <th class="px-6 py-4 font-normal hidden lg:table-cell">Phone</th>
+            <th class="px-6 py-4 font-normal hidden xl:table-cell">Address</th>
             <th class="px-6 py-4 font-normal">Actions</th>
           </tr>
         </thead>
@@ -52,6 +53,7 @@
             </td>
             <td class="px-6 py-4 text-tegbale-text-gray hidden md:table-cell">{{ school.email }}</td>
             <td class="px-6 py-4 text-tegbale-text-gray hidden lg:table-cell">{{ school.phone ?? '—' }}</td>
+            <td class="px-6 py-4 text-tegbale-text-gray hidden xl:table-cell">{{ school.address ?? '—' }}</td>
             <td class="px-6 py-4">
               <div class="flex items-center gap-3">
                 <!-- View -->
@@ -89,7 +91,7 @@
             </td>
           </tr>
           <tr v-if="!store.schools.length && !store.loading">
-            <td colspan="5" class="px-6 py-12 text-center text-tegbale-text-gray">
+            <td colspan="6" class="px-6 py-12 text-center text-tegbale-text-gray">
               No schools have been added yet
             </td>
           </tr>

@@ -12,6 +12,8 @@ export interface SchoolRequest {
   city?: string | null
   country?: string | null
   message?: string | null
+  cacDocumentUrl?: string | null
+  govtDocumentUrl?: string | null
   status: RequestStatus
   notes?: string | null
   createdAt: string
