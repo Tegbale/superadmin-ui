@@ -12,14 +12,29 @@
 
     <!-- Table -->
     <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
-      <!-- Export row -->
-      <div class="flex items-center justify-end px-4 py-3 border-b border-gray-50">
-        <ExportDropdown
-          :rows="store.staff"
-          :columns="exportColumns"
-          filename="staff-users"
-          :disabled="!store.staff.length"
-        />
+      <div class="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-gray-50">
+        <div class="flex-1 min-w-[160px] max-w-xs">
+          <SearchInput v-model="search" placeholder="Search staff..." />
+        </div>
+        <div class="relative">
+          <select v-model="roleFilter" class="appearance-none rounded-full border border-gray-200 bg-white pl-4 pr-9 py-2.5 text-sm font-roboto text-gray-700 focus:border-tegbale-blue focus:outline-none focus:ring-1 focus:ring-tegbale-blue/20">
+            <option value="">All roles</option>
+            <option value="SCHOOL_ADMIN">School Admin</option>
+            <option value="STAFF">Staff</option>
+            <option value="TEACHER">Teacher</option>
+          </select>
+          <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-tegbale-text-gray" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </div>
+        <div class="ml-auto shrink-0">
+          <ExportDropdown
+            :rows="store.staff"
+            :columns="exportColumns"
+            filename="staff-users"
+            :disabled="!store.staff.length"
+          />
+        </div>
       </div>
 
       <div v-if="store.loading && !store.staff.length" class="p-6 space-y-3">
@@ -131,7 +146,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useStaffStore } from '@/stores/staff.store'
 import { useToastStore } from '@/stores/toast.store'
 import type { User, Role } from '@/types'
@@ -139,6 +154,7 @@ import BaseButton from '@/components/base/BaseButton.vue'
 import BaseModal from '@/components/base/BaseModal.vue'
 import StaffForm from './StaffForm.vue'
 import ExportDropdown from '@/components/base/ExportDropdown.vue'
+import SearchInput from '@/components/base/SearchInput.vue'
 
 const store = useStaffStore()
 const toast = useToastStore()
@@ -150,10 +166,24 @@ const viewTarget = ref<User | null>(null)
 const editTarget = ref<User | null>(null)
 const formLoading = ref(false)
 
+const search = ref('')
+const roleFilter = ref('')
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+
 const roleLabel = (role: Role) => ({ SCHOOL_ADMIN: 'School Admin', STAFF: 'Staff', TEACHER: 'Teacher', SUPER_ADMIN: 'Super Admin', PARENT: 'Parent' }[role] ?? role)
 
-const fetchStaff = () => store.fetchAll({ page: page.value, limit })
+const fetchStaff = () => store.fetchAll({
+  page: page.value,
+  limit,
+  ...(search.value && { search: search.value }),
+  ...(roleFilter.value && { role: roleFilter.value }),
+})
 const changePage = (p: number) => { page.value = p; fetchStaff() }
+
+watch([search, roleFilter], () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => { page.value = 1; fetchStaff() }, 350)
+})
 const openView = (member: User) => { viewTarget.value = { ...member } }
 const openEdit = (member: User) => { editTarget.value = { ...member } }
 
