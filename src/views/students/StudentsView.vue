@@ -11,13 +11,18 @@
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
-      <div class="flex items-center justify-end px-4 py-3 border-b border-gray-50">
-        <ExportDropdown
-          :rows="store.students"
-          :columns="exportColumns"
-          filename="students"
-          :disabled="!store.students.length"
-        />
+      <div class="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-gray-50">
+        <div class="flex-1 min-w-[160px] max-w-xs">
+          <SearchInput v-model="search" placeholder="Search students..." />
+        </div>
+        <div class="ml-auto shrink-0">
+          <ExportDropdown
+            :rows="store.students"
+            :columns="exportColumns"
+            filename="students"
+            :disabled="!store.students.length"
+          />
+        </div>
       </div>
 
       <div v-if="store.loading && !store.students.length" class="p-6 space-y-3">
@@ -125,7 +130,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useStudentsStore } from '@/stores/students.store'
 import { useToastStore } from '@/stores/toast.store'
 import type { Student } from '@/types'
@@ -133,6 +138,7 @@ import BaseButton from '@/components/base/BaseButton.vue'
 import BaseModal from '@/components/base/BaseModal.vue'
 import ExportDropdown from '@/components/base/ExportDropdown.vue'
 import StudentForm from './StudentForm.vue'
+import SearchInput from '@/components/base/SearchInput.vue'
 
 const store = useStudentsStore()
 const toast = useToastStore()
@@ -144,6 +150,9 @@ const viewTarget = ref<Student | null>(null)
 const editTarget = ref<Student | null>(null)
 const formLoading = ref(false)
 
+const search = ref('')
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+
 const exportColumns = [
   { header: 'S/N', value: (_: Student, i: number) => i },
   { header: 'First Name', value: (s: Student) => s.firstName },
@@ -153,8 +162,13 @@ const exportColumns = [
   { header: 'Gender', value: (s: Student) => s.gender ?? '' },
 ]
 
-const fetchStudents = () => store.fetchAll({ page: page.value, limit })
+const fetchStudents = () => store.fetchAll({ page: page.value, limit, ...(search.value && { search: search.value }) })
 const changePage = (p: number) => { page.value = p; fetchStudents() }
+
+watch(search, () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => { page.value = 1; fetchStudents() }, 350)
+})
 const openEdit = (student: Student) => { editTarget.value = { ...student } }
 
 const handleCreate = async (payload: any) => {
