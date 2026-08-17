@@ -58,7 +58,7 @@
             :key="member.id"
             class="hover:bg-gray-50 transition-colors"
           >
-            <td class="px-6 py-4 text-tegbale-text-gray">{{ (page - 1) * limit + i + 1 }}</td>
+            <td class="px-6 py-4 text-tegbale-text-gray">{{ (page - 1) * limit.value + i + 1 }}</td>
             <td class="px-6 py-4 text-tegbale-text-gray">{{ member.firstName }} {{ member.lastName }}</td>
             <td class="px-6 py-4 text-tegbale-text-gray hidden md:table-cell">{{ member.email }}</td>
             <td class="px-6 py-4 text-tegbale-text-gray">{{ roleLabel(member.role) }}</td>
@@ -93,10 +93,22 @@
       </table>
       </div>
 
-      <!-- Pagination -->
-      <div v-if="store.meta.totalPages > 1" class="flex items-center justify-between border-t border-gray-100 px-6 py-4">
-        <p class="text-sm text-tegbale-text-gray font-roboto">{{ store.meta.total }} member{{ store.meta.total !== 1 ? 's' : '' }}</p>
-        <div class="flex gap-2">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 px-6 py-4">
+        <div class="flex items-center gap-2 text-sm font-roboto text-tegbale-text-gray">
+          <span>Rows per page:</span>
+          <div class="relative">
+            <select v-model="limit" class="appearance-none rounded-full border border-gray-200 bg-white pl-3 pr-7 py-1.5 text-sm font-roboto text-gray-700 focus:border-tegbale-blue focus:outline-none focus:ring-1 focus:ring-tegbale-blue/20">
+              <option :value="10">10</option>
+              <option :value="20">20</option>
+              <option :value="50">50</option>
+            </select>
+            <svg class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-tegbale-text-gray" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </div>
+          <span v-if="store.meta.total">of {{ store.meta.total }} member{{ store.meta.total !== 1 ? 's' : '' }}</span>
+        </div>
+        <div v-if="store.meta.totalPages > 1" class="flex gap-2">
           <BaseButton variant="secondary" size="sm" :disabled="page <= 1" @click="changePage(page - 1)">Prev</BaseButton>
           <span class="flex items-center px-3 text-sm font-roboto text-tegbale-text-gray">{{ page }} / {{ store.meta.totalPages }}</span>
           <BaseButton variant="secondary" size="sm" :disabled="page >= store.meta.totalPages" @click="changePage(page + 1)">Next</BaseButton>
@@ -160,7 +172,7 @@ const store = useStaffStore()
 const toast = useToastStore()
 
 const page = ref(1)
-const limit = 20
+const limit = ref<number>(10)
 const showCreate = ref(false)
 const viewTarget = ref<User | null>(null)
 const editTarget = ref<User | null>(null)
@@ -174,7 +186,7 @@ const roleLabel = (role: Role) => ({ SCHOOL_ADMIN: 'School Admin', STAFF: 'Staff
 
 const fetchStaff = () => store.fetchAll({
   page: page.value,
-  limit,
+  limit: limit.value,
   ...(search.value && { search: search.value }),
   ...(roleFilter.value && { role: roleFilter.value }),
 })
@@ -184,6 +196,7 @@ watch([search, roleFilter], () => {
   if (searchTimer) clearTimeout(searchTimer)
   searchTimer = setTimeout(() => { page.value = 1; fetchStaff() }, 350)
 })
+watch(limit, () => { page.value = 1; fetchStaff() })
 const openView = (member: User) => { viewTarget.value = { ...member } }
 const openEdit = (member: User) => { editTarget.value = { ...member } }
 
