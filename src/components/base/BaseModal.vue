@@ -8,13 +8,13 @@
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+      <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6">
         <div
-          class="w-full bg-white rounded-2xl shadow-xl"
+          class="w-full bg-white rounded-2xl shadow-xl flex flex-col max-h-[90vh]"
           :class="widthClass"
           @click.stop
         >
-          <div class="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+          <div class="flex-shrink-0 flex items-center justify-between border-b border-gray-100 px-6 py-4">
             <h3 class="text-lg font-semibold text-tegbale-navy-blue font-roboto">{{ title }}</h3>
             <button
               v-if="closable"
@@ -26,8 +26,8 @@
               </svg>
             </button>
           </div>
-          <div class="px-6 py-5"><slot /></div>
-          <div v-if="$slots.footer" class="border-t border-gray-100 px-6 py-4 flex justify-end gap-3">
+          <div class="px-6 py-5 overflow-y-auto"><slot /></div>
+          <div v-if="$slots.footer" class="flex-shrink-0 border-t border-gray-100 px-6 py-4 flex justify-end gap-3">
             <slot name="footer" />
           </div>
         </div>

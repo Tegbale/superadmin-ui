@@ -12,14 +12,18 @@
 
     <!-- Table -->
     <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
-      <!-- Table header row with export -->
-      <div class="flex items-center justify-end px-4 py-3 border-b border-gray-50">
-        <ExportDropdown
-          :rows="store.schools"
-          :columns="exportColumns"
-          filename="schools"
-          :disabled="!store.schools.length"
-        />
+      <div class="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-gray-50">
+        <div class="flex-1 min-w-[160px] max-w-xs">
+          <SearchInput v-model="search" placeholder="Search schools..." />
+        </div>
+        <div class="ml-auto shrink-0">
+          <ExportDropdown
+            :rows="store.schools"
+            :columns="exportColumns"
+            filename="schools"
+            :disabled="!store.schools.length"
+          />
+        </div>
       </div>
 
       <div v-if="store.loading && !store.schools.length" class="p-6 space-y-3">
@@ -44,7 +48,7 @@
             :key="school.id"
             class="hover:bg-gray-50 transition-colors"
           >
-            <td class="px-6 py-4 text-tegbale-text-gray">{{ (page - 1) * limit + i + 1 }}</td>
+            <td class="px-6 py-4 text-tegbale-text-gray">{{ (page - 1) * limit.value + i + 1 }}</td>
             <td class="px-6 py-4">
               <RouterLink
                 :to="{ name: 'school-detail', params: { id: school.id } }"
@@ -99,12 +103,13 @@
       </table>
       </div>
 
-      <!-- Pagination -->
-      <div v-if="store.meta.totalPages > 1" class="flex items-center justify-between border-t border-gray-100 px-6 py-4">
-        <p class="text-sm text-tegbale-text-gray font-roboto">
-          {{ store.meta.total }} school{{ store.meta.total !== 1 ? 's' : '' }}
-        </p>
-        <div class="flex gap-2">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 px-6 py-4">
+        <div class="flex items-center gap-2 text-sm font-roboto text-tegbale-text-gray">
+          <span>Rows per page:</span>
+          <PerPageSelect v-model="limit" />
+          <span v-if="store.meta.total">of {{ store.meta.total }} school{{ store.meta.total !== 1 ? 's' : '' }}</span>
+        </div>
+        <div v-if="store.meta.totalPages > 1" class="flex gap-2">
           <BaseButton variant="secondary" size="sm" :disabled="page <= 1" @click="changePage(page - 1)">Prev</BaseButton>
           <span class="flex items-center px-3 text-sm font-roboto text-tegbale-text-gray">{{ page }} / {{ store.meta.totalPages }}</span>
           <BaseButton variant="secondary" size="sm" :disabled="page >= store.meta.totalPages" @click="changePage(page + 1)">Next</BaseButton>
@@ -125,7 +130,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSchoolsStore } from '@/stores/schools.store'
 import { useToastStore } from '@/stores/toast.store'
@@ -134,19 +139,30 @@ import BaseButton from '@/components/base/BaseButton.vue'
 import BaseModal from '@/components/base/BaseModal.vue'
 import SchoolForm from './SchoolForm.vue'
 import ExportDropdown from '@/components/base/ExportDropdown.vue'
+import SearchInput from '@/components/base/SearchInput.vue'
+import PerPageSelect from '@/components/base/PerPageSelect.vue'
 
 const store = useSchoolsStore()
 const toast = useToastStore()
 const router = useRouter()
 
 const page = ref(1)
-const limit = 20
+const limit = ref<number>(10)
 const showCreate = ref(false)
 const editTarget = ref<School | null>(null)
 const formLoading = ref(false)
 
-const fetchSchools = () => store.fetchAll({ page: page.value, limit })
+const search = ref('')
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+
+const fetchSchools = () => store.fetchAll({ page: page.value, limit: limit.value, ...(search.value && { search: search.value }) })
 const changePage = (p: number) => { page.value = p; fetchSchools() }
+
+watch(search, () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => { page.value = 1; fetchSchools() }, 350)
+})
+watch(limit, () => { page.value = 1; fetchSchools() })
 const openEdit = (school: School) => { editTarget.value = { ...school } }
 
 const handleCreate = async (payload: { name: string; email: string; phone?: string; address?: string }) => {

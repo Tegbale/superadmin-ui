@@ -12,14 +12,29 @@
 
     <!-- Table -->
     <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
-      <!-- Export row -->
-      <div class="flex items-center justify-end px-4 py-3 border-b border-gray-50">
-        <ExportDropdown
-          :rows="store.staff"
-          :columns="exportColumns"
-          filename="staff-users"
-          :disabled="!store.staff.length"
-        />
+      <div class="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-gray-50">
+        <div class="flex-1 min-w-[160px] max-w-xs">
+          <SearchInput v-model="search" placeholder="Search staff..." />
+        </div>
+        <div class="relative">
+          <select v-model="roleFilter" class="appearance-none rounded-full border border-gray-200 bg-white pl-4 pr-9 py-2.5 text-sm font-roboto text-gray-700 focus:border-tegbale-blue focus:outline-none focus:ring-1 focus:ring-tegbale-blue/20">
+            <option value="">All roles</option>
+            <option value="SCHOOL_ADMIN">School Admin</option>
+            <option value="STAFF">Staff</option>
+            <option value="TEACHER">Teacher</option>
+          </select>
+          <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-tegbale-text-gray" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </div>
+        <div class="ml-auto shrink-0">
+          <ExportDropdown
+            :rows="store.staff"
+            :columns="exportColumns"
+            filename="staff-users"
+            :disabled="!store.staff.length"
+          />
+        </div>
       </div>
 
       <div v-if="store.loading && !store.staff.length" class="p-6 space-y-3">
@@ -43,7 +58,7 @@
             :key="member.id"
             class="hover:bg-gray-50 transition-colors"
           >
-            <td class="px-6 py-4 text-tegbale-text-gray">{{ (page - 1) * limit + i + 1 }}</td>
+            <td class="px-6 py-4 text-tegbale-text-gray">{{ (page - 1) * limit.value + i + 1 }}</td>
             <td class="px-6 py-4 text-tegbale-text-gray">{{ member.firstName }} {{ member.lastName }}</td>
             <td class="px-6 py-4 text-tegbale-text-gray hidden md:table-cell">{{ member.email }}</td>
             <td class="px-6 py-4 text-tegbale-text-gray">{{ roleLabel(member.role) }}</td>
@@ -78,10 +93,13 @@
       </table>
       </div>
 
-      <!-- Pagination -->
-      <div v-if="store.meta.totalPages > 1" class="flex items-center justify-between border-t border-gray-100 px-6 py-4">
-        <p class="text-sm text-tegbale-text-gray font-roboto">{{ store.meta.total }} member{{ store.meta.total !== 1 ? 's' : '' }}</p>
-        <div class="flex gap-2">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 px-6 py-4">
+        <div class="flex items-center gap-2 text-sm font-roboto text-tegbale-text-gray">
+          <span>Rows per page:</span>
+          <PerPageSelect v-model="limit" />
+          <span v-if="store.meta.total">of {{ store.meta.total }} member{{ store.meta.total !== 1 ? 's' : '' }}</span>
+        </div>
+        <div v-if="store.meta.totalPages > 1" class="flex gap-2">
           <BaseButton variant="secondary" size="sm" :disabled="page <= 1" @click="changePage(page - 1)">Prev</BaseButton>
           <span class="flex items-center px-3 text-sm font-roboto text-tegbale-text-gray">{{ page }} / {{ store.meta.totalPages }}</span>
           <BaseButton variant="secondary" size="sm" :disabled="page >= store.meta.totalPages" @click="changePage(page + 1)">Next</BaseButton>
@@ -131,7 +149,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useStaffStore } from '@/stores/staff.store'
 import { useToastStore } from '@/stores/toast.store'
 import type { User, Role } from '@/types'
@@ -139,21 +157,38 @@ import BaseButton from '@/components/base/BaseButton.vue'
 import BaseModal from '@/components/base/BaseModal.vue'
 import StaffForm from './StaffForm.vue'
 import ExportDropdown from '@/components/base/ExportDropdown.vue'
+import SearchInput from '@/components/base/SearchInput.vue'
+import PerPageSelect from '@/components/base/PerPageSelect.vue'
 
 const store = useStaffStore()
 const toast = useToastStore()
 
 const page = ref(1)
-const limit = 20
+const limit = ref<number>(10)
 const showCreate = ref(false)
 const viewTarget = ref<User | null>(null)
 const editTarget = ref<User | null>(null)
 const formLoading = ref(false)
 
+const search = ref('')
+const roleFilter = ref('')
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+
 const roleLabel = (role: Role) => ({ SCHOOL_ADMIN: 'School Admin', STAFF: 'Staff', TEACHER: 'Teacher', SUPER_ADMIN: 'Super Admin', PARENT: 'Parent' }[role] ?? role)
 
-const fetchStaff = () => store.fetchAll({ page: page.value, limit })
+const fetchStaff = () => store.fetchAll({
+  page: page.value,
+  limit: limit.value,
+  ...(search.value && { search: search.value }),
+  ...(roleFilter.value && { role: roleFilter.value }),
+})
 const changePage = (p: number) => { page.value = p; fetchStaff() }
+
+watch([search, roleFilter], () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => { page.value = 1; fetchStaff() }, 350)
+})
+watch(limit, () => { page.value = 1; fetchStaff() })
 const openView = (member: User) => { viewTarget.value = { ...member } }
 const openEdit = (member: User) => { editTarget.value = { ...member } }
 
