@@ -18,6 +18,9 @@ export const useAuthStore = defineStore(
 
     async function login(email: string, password: string) {
       const { data } = await authApi.login({ email, password })
+      if (data.data.user.role !== 'SUPER_ADMIN') {
+        throw new Error('Access denied. This portal is for Super Admins only.')
+      }
       user.value = data.data.user
       accessToken.value = data.data.accessToken
       refreshToken.value = data.data.refreshToken
