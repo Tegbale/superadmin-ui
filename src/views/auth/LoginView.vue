@@ -108,7 +108,7 @@ const handleLogin = async () => {
     await authStore.login(form.email, form.password)
     router.push({ name: 'dashboard' })
   } catch (err) {
-    error.value = typeof err === 'string' ? err : 'Invalid email or password'
+    error.value = err instanceof Error ? err.message : 'Invalid email or password'
   } finally {
     loading.value = false
   }

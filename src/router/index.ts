@@ -92,7 +92,11 @@ router.beforeEach((to) => {
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
     return { name: 'login' }
   }
-  if (to.meta.guest && auth.isAuthenticated) {
+  if (to.meta.requiresAuth && auth.isAuthenticated && !auth.isSuperAdmin) {
+    auth.logout()
+    return { name: 'login' }
+  }
+  if (to.meta.guest && auth.isAuthenticated && auth.isSuperAdmin) {
     return { name: 'dashboard' }
   }
 })
